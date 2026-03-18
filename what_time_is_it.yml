@@ -1,1 +1,8 @@
-run date
+name: What time is it?
+on: [ push ]
+jobs:
+  what_time_is_it:
+    name: What time is it?
+    runs-on: ubuntu-20.04
+    steps:
+      - run: date
