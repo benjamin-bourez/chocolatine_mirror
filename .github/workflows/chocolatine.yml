@@ -1,0 +1,42 @@
+name: chocolatine
+on:
+  push:
+    branches-ignore:
+      - "no-ga/**"
+  pull_request:
+    branches-ignore:
+      - "no-ga/**"
+jobs:
+    check_if_workflow_should_run:
+        name: check_if_workflow_should_run
+        runs-on: ubunty-latest
+        outputs:
+            should_run: ${{ steps.check_if_repository_is_mirror.outputs.should_run }}
+        steps:
+          - name: Checking if the repository is the mirror repository
+            id: check_if_repository_is_mirror
+            shell: bash
+            run: |
+              if [[ $MIRROR_SSH_URL =~ $GITHUB_REPOSITORY ]]; then
+                echo "The repository is the mirror repository"
+                echo "should_run=false" >> $GITHUB_OUTPUT
+              else
+                echo "should_run=true" >> $GITHUB_OUTPUT
+              fi
+    
+    check_compilation_and_coding_style:
+        name: check_compilation_and_coding_style
+        runs-on: ubuntu-latest
+        container: epitechcontent/epitest-docker:latest
+        needs: [check_if_workflow_should_run]
+        if: ${{ needs.check_if_workflow_should_run.outputs.should_run == 'true' }}
+        steps:
+            - name: Fetching repository
+              uses: actions/checkout@v6
+            
+            - name: running banana
+              run: echo "report<<EOF" >> $GITHUB_OUTPUT (banana-check-repo || exit 0) >> $GITHUB_OUTPUT echo "EOF" >> $GITHUB_OUTPUT
+
+            - name: run make
+              run: make
+              timeout-minutes: 2
